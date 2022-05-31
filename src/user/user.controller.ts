@@ -1,8 +1,17 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Render,
+  Res,
+} from '@nestjs/common';
 import { UserCreateDTO } from './dtos/user-create.dto';
 import { UserDTO } from './dtos/user.dto';
 import { Serialize } from '../interceptors/user.interceptor';
 import { UserService } from './user.service';
+import { Response } from 'express';
 
 @Controller('user')
 @Serialize(UserDTO)
@@ -25,6 +34,32 @@ export class UserController {
   @Post('delete')
   async deleteUser(@Body() body: Partial<UserCreateDTO>) {
     const user = await this.userService.deleteUser(body.email);
+    return user;
+  }
+
+  @Post('send-reset-password-email')
+  async forgotPassword(@Body() body: Partial<UserCreateDTO>) {
+    const user = await this.userService.forgotPassword(body.email);
+    return user;
+  }
+
+  @Get('reset-password/:email')
+  root(@Res() res: Response, @Param('email') email: string) {
+    console.log(email);
+
+    return res.render('reset-password', {
+      email: email,
+    });
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: Partial<UserCreateDTO>) {
+    console.log(body);
+    
+    const user = await this.userService.resetPassword(
+      body.email,
+      body.password,
+    );
     return user;
   }
 }
