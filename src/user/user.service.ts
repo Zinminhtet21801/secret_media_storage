@@ -4,13 +4,18 @@ import { Repository } from 'typeorm';
 import { UserCreateDTO } from './dtos/user-create.dto';
 import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
+import { AuthService } from '../auth/auth.service';
+import { ContactUsDTO } from './dtos/contact-us.dto';
 const nodemailer = require('nodemailer');
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private userRepo: Repository<User>,
+    private readonly authService: AuthService,
+  ) {}
 
   async findUser(email: string) {
-    const user = await this.userRepo.findOne({ email: email });
+    const user = await this.userRepo.findOneBy({ email: email });
     return user;
   }
 
@@ -23,7 +28,18 @@ export class UserService {
     if (!isValid) {
       throw new BadRequestException('Password is incorrect!!!');
     }
-    return user;
+    console.log(user);
+
+    const jwtUser = await this.authService.signJWT(user);
+    const refreshJwtToken = await this.authService.signRefreshJWT(user);
+
+    // return user;
+    return {
+      token: jwtUser,
+      refreshToken: refreshJwtToken,
+      fullName: user.fullName,
+      email,
+    };
   }
 
   async hashPassword(password: string) {
@@ -34,6 +50,7 @@ export class UserService {
 
   async saveUser(createUser: UserCreateDTO) {
     const existedUser = await this.findUser(createUser.email);
+    
     if (existedUser) {
       throw new BadRequestException('User already exists!!!');
     }
@@ -41,8 +58,25 @@ export class UserService {
       ...createUser,
       password: await this.hashPassword(createUser.password),
     };
-    const user = await this.userRepo.insert(incomingUser);
-    return user;
+    const insertedUser = await this.userRepo.insert(incomingUser);
+    
+    const user = {
+      fullName: createUser.fullName,
+      email: createUser.email,
+      id: insertedUser.identifiers[0].id
+    }
+    
+    const jwtUser = await this.authService.signJWT(user);
+    const refreshJwtToken = await this.authService.signRefreshJWT(user);
+
+    return {
+      token: jwtUser,
+      refreshToken: refreshJwtToken,
+      fullName: createUser.fullName,
+      email: createUser.email,
+    };
+
+    // return user;
   }
 
   async deleteUser(email: string) {
@@ -54,20 +88,13 @@ export class UserService {
     return deletedUser;
   }
 
-  async forgotPassword(userEmail: string) {
-    const { id, name, email } = await this.findUser(userEmail);
-    if (!email) {
-      throw new BadRequestException('User not found!!!');
-    }
-
-    // host: 'smtp.ethereal.email',
-    // port: 587,
-    // secure: false,
-    // auth: {
-    //   user: process.env.ETHEREAL_USERNAME,
-    //   pass: process.env.ETHEREAL_PASSWORD,
-    // },
-
+  async sendMail(
+    fromEmail: string,
+    toEmail: string,
+    subject: string,
+    fullName: string,
+    text: string,
+  ) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -77,14 +104,10 @@ export class UserService {
     });
 
     const mailDetails = {
-      from: process.env.GMAIL_USERNAME,
-      to: email,
-      subject: 'Forgot Password',
-      text: `Hi ${name},
-    You have requested to reset your password.
-    Please click on the link below to reset your password.
-    ${process.env.BASE_URL}/user/reset-password/${email}
-    `,
+      from: fromEmail,
+      to: toEmail,
+      subject: subject,
+      text,
     };
 
     const info = await transporter.sendMail(mailDetails, function (err, data) {
@@ -94,13 +117,52 @@ export class UserService {
         console.log('Email sent successfully');
       }
     });
+  }
+  async contactUs(email: string, fullName: string, message: string) {
+    this.sendMail(
+      email,
+      process.env.GMAIL_USERNAME,
+      'Message from a client :)',
+      fullName,
+      message,
+    );
+  }
+
+  async forgotPassword(userEmail: string) {
+    const user = await this.findUser(userEmail);
+    if (!user) {
+      throw new BadRequestException('User not found!!!');
+    }
+    const { id, fullName, email } = user;
+    const text = `Hi ${fullName},
+    You have requested to reset your password.
+    Please click on the link below to reset your password.
+    ${process.env.BASE_URL}/user/reset-password/${email}
+    `;
+
+    // (from email, to email, subject, fullName, text)
+    this.sendMail(
+      process.env.GMAIL_USERNAME,
+      email,
+      'Forgot Password',
+      fullName,
+      text,
+    );
+    // host: 'smtp.ethereal.email',
+    // port: 587,
+    // secure: false,
+    // auth: {
+    //   user: process.env.ETHEREAL_USERNAME,
+    //   pass: process.env.ETHEREAL_PASSWORD,
+    // },
+
     // console.log('Message sent: %s', info.messageId);
     // console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
   }
 
   async resetPassword(inputEmail: string, inputPassword: string) {
     console.log(inputEmail, inputPassword);
-    
+
     const user = await this.findUser(inputEmail);
     if (!user) {
       throw new BadRequestException('User not found!!!');
