@@ -644,6 +644,7 @@ export const mimes = {
   'multipart/x-zip': '.zip',
   // 'application/octet-stream': '.zoo',
   'text/x-script.zsh': '.zsh',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    '.docx',
   'application/x-ms-dos-executable': '.exe',
 };
