@@ -1,4 +1,4 @@
-import { User } from 'src/user/user.entity';
+import { User } from '../user/user.entity';
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
@@ -8,6 +8,9 @@ export class Media {
 
   @Column()
   name: string;
+
+  @Column()
+  type: string;
 
   @ManyToOne(() => User, (user: User) => user.email)
   user: User;
