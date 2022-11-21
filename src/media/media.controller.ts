@@ -1,19 +1,25 @@
 import {
   Body,
   Controller,
+  Get,
   Post,
+  Req,
+  Request,
   UploadedFile,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DecryptedJWT } from '../assets/customTypes';
 import { mimes } from '../assets/mimeExtension';
 import { MediaService } from './media.service';
 let fs = require('fs-extra');
 let referenceFileName = '';
 let userEmail = '';
+let mimeType = 'application';
 
 let user: DecryptedJWT = {
   id: 0,
@@ -50,8 +56,17 @@ export class MediaController {
           user = decodingJWT(splittedJWT);
           const { email } = user;
           userEmail = email;
-
-          let path = `./uploads/${email}`;
+          mimeType = file.mimetype.split('/')[0];
+          let path = '';
+          if (
+            mimeType.includes('image') ||
+            mimeType.includes('audio') ||
+            mimeType.includes('video')
+          ) {
+            path = `./uploads/${email}/${mimeType}`;
+          } else {
+            path = `./uploads/${email}/others`;
+          }
           fs.mkdirsSync(path);
           callback(null, path);
         },
@@ -71,7 +86,16 @@ export class MediaController {
       user,
       userEmail,
       referenceFileName,
+      mimeType,
     );
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('getQuantity')
+  async getQuantity(@Req() req: any) {
+    const { id: userId } = req?.user;
+    const res = await this.mediaService.getQuantity(userId);
     return res;
   }
 }
