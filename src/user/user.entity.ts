@@ -1,4 +1,4 @@
-import { Media } from 'src/media/media.entity';
+import { Media } from '../media/media.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
