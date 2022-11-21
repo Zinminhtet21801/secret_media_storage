@@ -11,10 +11,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     // Add your custom authentication logic here
     // for example, call super.logIn(request) to establish a session.
     const req = context.switchToHttp().getRequest();
-    
-    // if (!req?.headers?.authorization?.split(' ')[1]) {
-    //   throw new UnauthorizedException();
-    // }
+
+    if (!req?.headers?.authorization?.split(' ')[1]) {
+      throw new UnauthorizedException();
+    }
 
     return super.canActivate(context);
 
@@ -22,7 +22,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   handleRequest(err, user, info: Error, context: any, status: any) {
-
     if (err || info || !user) {
       // throw err || info || new UnauthorizedException();
       throw new UnauthorizedException();
