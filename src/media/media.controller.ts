@@ -59,9 +59,9 @@ export class MediaController {
           const splittedJWT = req.headers.cookie.split('=')[1];
           user = decodingJWT(splittedJWT);
           const { email } = user;
-          userEmail = email
+          userEmail = email;
           mimeType = file.mimetype.split('/')[0];
-          const path = filePathHelpers({ email, file, mimeType });
+          const path = filePathHelpers({ email, mimeType });
           fs.mkdirsSync(path);
           callback(null, path);
         },
