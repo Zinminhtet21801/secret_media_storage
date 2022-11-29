@@ -64,4 +64,31 @@ export class MediaService {
       console.log(e);
     }
   }
+
+  /**
+   * It gets all the media items from the database that belong to a specific user and are of a specific
+   * type
+   * @param {number} userId - number, category: string
+   * @param {string} category - string - this is the category of the media item.
+   * @returns An array of media items
+   */
+  async getCategoriesItems(userId: number, category: string, page: string) {
+    try {
+      const res = await this.mediaRepo.find({
+        where: {
+          user: {
+            id: userId.toString(),
+          },
+          type: category,
+        },
+        skip: (Number(page) - 1) * 10,
+        take: 10,
+      });
+      return {
+        data: res,
+      };
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }
