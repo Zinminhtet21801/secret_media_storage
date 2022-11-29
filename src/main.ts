@@ -6,9 +6,11 @@ import { join } from 'path';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
+const express = require('express');
 const PORT = process.env.PORT || 5000;
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use('/uploads', express.static('uploads'));
   app.enableCors({
     origin: process.env.FRONT_END_URL,
     credentials: true,

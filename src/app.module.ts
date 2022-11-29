@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { MediaController } from './media/media.controller';
 import { MediaService } from './media/media.service';
 import { MediaModule } from './media/media.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -24,6 +26,9 @@ import { MediaModule } from './media/media.module';
           }
         : {},
     ),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'uploads'),
+    }),
     TypeOrmModule.forRoot(),
     UserModule,
     MediaModule,
