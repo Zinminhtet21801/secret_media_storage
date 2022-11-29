@@ -2,9 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
   Req,
-  Request,
   UploadedFile,
   UploadedFiles,
   UseGuards,
@@ -16,10 +16,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DecryptedJWT } from '../assets/customTypes';
 import { mimes } from '../assets/mimeExtension';
 import { MediaService } from './media.service';
+import { filePathHelpers } from './helpers/filepath.helpers';
+import { Request } from 'express';
 let fs = require('fs-extra');
 let referenceFileName = '';
 let userEmail = '';
 let mimeType = 'application';
+
+type User = { id: number; fullName: string; email: string };
 
 let user: DecryptedJWT = {
   id: 0,
@@ -55,18 +59,9 @@ export class MediaController {
           const splittedJWT = req.headers.cookie.split('=')[1];
           user = decodingJWT(splittedJWT);
           const { email } = user;
-          userEmail = email;
+          userEmail = email
           mimeType = file.mimetype.split('/')[0];
-          let path = '';
-          if (
-            mimeType.includes('image') ||
-            mimeType.includes('audio') ||
-            mimeType.includes('video')
-          ) {
-            path = `./uploads/${email}/${mimeType}`;
-          } else {
-            path = `./uploads/${email}/others`;
-          }
+          const path = filePathHelpers({ email, file, mimeType });
           fs.mkdirsSync(path);
           callback(null, path);
         },
@@ -93,9 +88,25 @@ export class MediaController {
 
   @UseGuards(JwtAuthGuard)
   @Get('getQuantity')
-  async getQuantity(@Req() req: any) {
-    const { id: userId } = req?.user;
-    const res = await this.mediaService.getQuantity(userId);
+  async getQuantity(@Req() req: Request) {
+    const { id: userId } = req?.user as User;
+    const res = await this.mediaService.getQuantity(userId.toString());
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('getCategories/:category/page/:page')
+  async getCategoriesItems(
+    @Req() req: Request,
+    @Param('category') category: string,
+    @Param('page') page: string,
+  ) {
+    const { id: userId } = req?.user as User;
+    const res = await this.mediaService.getCategoriesItems(
+      userId,
+      category,
+      page,
+    );
     return res;
   }
 }
