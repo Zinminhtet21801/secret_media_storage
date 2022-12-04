@@ -16,7 +16,7 @@ lerna-debug.log*
 .env.development
 .env.production
 
-todo
+todo.txt
 
 # OS
 .DS_Store
