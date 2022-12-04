@@ -1,10 +1,14 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Header,
   Param,
   Post,
   Req,
+  Res,
+  StreamableFile,
   UploadedFile,
   UploadedFiles,
   UseGuards,
@@ -17,7 +21,9 @@ import { DecryptedJWT } from '../assets/customTypes';
 import { mimes } from '../assets/mimeExtension';
 import { MediaService } from './media.service';
 import { filePathHelpers } from './helpers/filepath.helpers';
-import { Request } from 'express';
+import { Request, Response } from 'express';
+import { join } from 'path';
+import { createReadStream } from 'fs';
 let fs = require('fs-extra');
 let referenceFileName = '';
 let userEmail = '';
@@ -68,10 +74,10 @@ export class MediaController {
         filename: (req, file, cb) => {
           console.log(file);
 
-          referenceFileName =
-            file.originalname + '-' + Date.now() + mimes[file.mimetype];
+          referenceFileName = file.originalname;
 
-          cb(null, file.originalname + '-' + Date.now() + mimes[file.mimetype]);
+          // cb(null, file.originalname + '-' + Date.now() + mimes[file.mimetype]);
+          cb(null, file.originalname);
         },
       }),
     }),
@@ -108,5 +114,43 @@ export class MediaController {
       page,
     );
     return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('remove/:id')
+  async removeMedia(@Req() req: Request, @Param('id') id: string) {
+    const { id: userId, email } = req?.user as User;
+    const res = await this.mediaService.deleteMediaItem(
+      userId.toString(),
+      email,
+      id,
+    );
+    return res;
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('download/:category/:id')
+  async downloadMedia(
+    @Req() req: Request,
+    @Param('id') id: string,
+    @Param('category') category: string,
+    // @Res({ passthrough: true }) response: Response,
+    @Res() response: Response,
+  ) {
+    const { id: userId, email } = req?.user as User;
+    const file = await this.mediaService.downloadMedia(
+      userId,
+      id,
+      email,
+      category,
+    );
+    // file.pipe(response)
+    const media = file.name.split(`${email}/`)[1];
+    response.download(`./uploads/${email}/${category}/${media}`);
+    // response.setHeader('Content-Disposition', `attachment; filename=${media}`);
+    // return response.download(`/${email}/${category}/${media}`);
+    // response.contentType('image/jpeg');
+    // response.send(file);
+    // return new StreamableFile(file);
   }
 }
