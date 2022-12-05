@@ -12,6 +12,9 @@ export class Media {
   @Column()
   type: string;
 
+  @Column()
+  mimeType: string;
+
   @ManyToOne(() => User, (user: User) => user.email)
   user: User;
 }
