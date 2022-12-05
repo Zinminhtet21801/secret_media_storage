@@ -1,34 +1,34 @@
 export type FilePath = {
   email: string;
-  mimeType: string;
+  fileType: string;
 };
 
 export type FileTypeMatcher = {
-  mimeType: string;
+  fileType: string;
 };
 
-export const filePathHelpers = ({ email, mimeType }: FilePath) => {
+export const filePathHelpers = ({ email, fileType }: FilePath) => {
   let path = '';
   if (
-    mimeType.includes('image') ||
-    mimeType.includes('audio') ||
-    mimeType.includes('video')
+    fileType.includes('image') ||
+    fileType.includes('audio') ||
+    fileType.includes('video')
   ) {
-    path = `./uploads/${email}/${mimeType}`;
+    path = `./uploads/${email}/${fileType}`;
   } else {
     path = `./uploads/${email}/others`;
   }
   return path;
 };
 
-export const fileTypeMatcherHelpers = ({ mimeType }: FileTypeMatcher) => {
+export const fileTypeMatcherHelpers = ({ fileType }: FileTypeMatcher) => {
   let type = '';
   if (
-    mimeType.includes('image') ||
-    mimeType.includes('audio') ||
-    mimeType.includes('video')
+    fileType.includes('image') ||
+    fileType.includes('audio') ||
+    fileType.includes('video')
   ) {
-    type = mimeType;
+    type = fileType;
   } else {
     type = 'others';
   }
