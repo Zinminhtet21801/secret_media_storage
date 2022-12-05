@@ -21,6 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "NODE_ENV=production typeorm-ts-node-commonjs -d src/ormconfig.ts",
+    "migration:generate:dev": "NODE_ENV=development yarn run typeorm migration:generate -- migrations/initial-schema -o && NODE_ENV=development typeorm migration:run -d dist/ormconfig",
     "migration:generate": "NODE_ENV=production yarn run typeorm migration:generate -- migrations/initial-schema -o && NODE_ENV=production typeorm migration:run -d dist/ormconfig"
   },
   "dependencies": {
