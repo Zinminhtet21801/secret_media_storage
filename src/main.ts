@@ -21,6 +21,20 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  app.use(function (req, res, next) {
+    res.setHeader(
+      'Access-Control-Allow-Origin',
+      process.env.NODE_ENV === 'production'
+        ? process.env.FRONT_END_URL
+        : 'http://localhost:3000',
+    );
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    next();
+  });
+
   app.enableCors({
     origin:
       process.env.NODE_ENV === 'production'
