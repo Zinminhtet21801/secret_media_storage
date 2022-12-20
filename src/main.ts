@@ -9,6 +9,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 const express = require('express');
 const PORT = process.env.PORT || 5000;
+
+console.log('====================================');
+console.log(
+  process.env.NODE_ENV === 'production'
+    ? process.env.FRONT_END_URL
+    : 'http://localhost:3000',
+);
+console.log('====================================');
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use('/uploads', express.static('uploads'));
