@@ -10,9 +10,7 @@ import { UserService } from '../user/user.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
-type EnvConfig = Record<string, string>;
-
-let parsed: EnvConfig;
+let parsed;
 
 if (process.env.NODE_ENV === 'production') {
   parsed = {

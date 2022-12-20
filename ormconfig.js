@@ -1,4 +1,4 @@
-var dotenv = require('dotenv');
+var dotenv = require('dotenv').config();
 var fs = require('fs');
 var path = require('path');
 // var variable = fs.readFileSync(path.resolve(__dirname, '.env.production'),'utf8');
@@ -23,6 +23,10 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   parsed = dotenv.config({ path: `.env.${process.env.NODE_ENV}` }).parsed;
 }
+
+console.log('====================================');
+console.log(parsed,process.env.ETHEREAL_NAME, process.env.NODE_ENV);
+console.log('====================================');
 
 var dbConfig = {
   synchronize: false,
