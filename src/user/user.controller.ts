@@ -54,8 +54,8 @@ export class UserController {
       .cookie('token', token.access_token, {
         // httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        // sameSite: 'none',
-        // secure: true,
+        sameSite: 'none',
+        secure: true,
         domain: 'localhost',
         path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
@@ -126,8 +126,8 @@ export class UserController {
       .cookie('token', token.access_token, {
         // httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        // sameSite: 'none',
-        // secure: true,
+        sameSite: 'none',
+        secure: true,
         domain: 'localhost',
         path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
