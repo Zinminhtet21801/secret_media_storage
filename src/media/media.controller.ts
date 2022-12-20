@@ -23,11 +23,13 @@ import { MediaService } from './media.service';
 import { filePathHelpers } from './helpers/filepath.helpers';
 import { Request, Response } from 'express';
 import { join } from 'path';
-import { createReadStream } from 'fs';
-let fs = require('fs-extra');
+import { createReadStream, statSync } from 'fs';
+import { ApiTags } from '@nestjs/swagger';
+const fs = require('fs-extra');
 let referenceFileName = '';
 let userEmail = '';
 let mimeType = 'application';
+let fileType = 'application';
 
 type User = { id: number; fullName: string; email: string };
 
@@ -51,6 +53,7 @@ export const decodingJWT = (token: string) => {
   return null;
 };
 
+@ApiTags('Media')
 @Controller('media')
 export class MediaController {
   constructor(private mediaService: MediaService) {}
@@ -66,8 +69,9 @@ export class MediaController {
           user = decodingJWT(splittedJWT);
           const { email } = user;
           userEmail = email;
-          mimeType = file.mimetype.split('/')[0];
-          const path = filePathHelpers({ email, mimeType });
+          mimeType = file.mimetype;
+          fileType = file.mimetype.split('/')[0];
+          const path = filePathHelpers({ email, fileType });
           fs.mkdirsSync(path);
           callback(null, path);
         },
@@ -87,6 +91,7 @@ export class MediaController {
       user,
       userEmail,
       referenceFileName,
+      fileType,
       mimeType,
     );
     return res;
@@ -134,9 +139,9 @@ export class MediaController {
     @Req() req: Request,
     @Param('id') id: string,
     @Param('category') category: string,
-    // @Res({ passthrough: true }) response: Response,
-    @Res() response: Response,
-  ) {
+    @Res({ passthrough: true }) response: Response,
+    // @Res() response: Response,
+  ): Promise<StreamableFile> {
     const { id: userId, email } = req?.user as User;
     const file = await this.mediaService.downloadMedia(
       userId,
@@ -145,12 +150,29 @@ export class MediaController {
       category,
     );
     // file.pipe(response)
-    const media = file.name.split(`${email}/`)[1];
-    response.download(`./uploads/${email}/${category}/${media}`);
+    // const media = file.name.split(`${email}/`)[1];
+    // response.download(`./uploads/${email}/${category}/${file.name}`);
     // response.setHeader('Content-Disposition', `attachment; filename=${media}`);
     // return response.download(`/${email}/${category}/${media}`);
-    // response.contentType('image/jpeg');
+    // response.contentType('image/*');
     // response.send(file);
-    // return new StreamableFile(file);
+    const streamFile = createReadStream(
+      join(`./uploads/${email}/${category}/${file.name}`),
+      {
+        autoClose: true,
+      },
+    );
+
+    response.contentType(file.mimeType);
+    response.set({
+      'Content-Length': statSync(`./uploads/${email}/${category}/${file.name}`)
+        .size,
+    });
+    response.set({
+      'Content-Disposition': `attachment; filename=${file.name}`,
+    });
+    return new StreamableFile(streamFile);
+
+    // return response.send(file);
   }
 }

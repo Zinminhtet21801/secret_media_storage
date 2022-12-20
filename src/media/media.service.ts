@@ -43,9 +43,10 @@ export class MediaService {
     user: object,
     userEmail: string,
     referenceFileName: string,
+    fileType: string,
     mimeType: string,
   ) {
-    const type = fileTypeMatcherHelpers({ mimeType });
+    const type = fileTypeMatcherHelpers({ fileType });
     const checkFileExist = await this.getItemByName(referenceFileName);
     if (checkFileExist) {
       throw new HttpException('File already exist', 400);
@@ -54,6 +55,7 @@ export class MediaService {
       name: `${referenceFileName}`,
       user,
       type,
+      mimeType,
     });
 
     const res = await this.mediaRepo.save(newFile);
@@ -106,7 +108,7 @@ export class MediaService {
    */
   async getCategoriesItems(userId: number, category: string, page: string) {
     try {
-      const res = await this.mediaRepo.find({
+      const [res, length] = await this.mediaRepo.findAndCount({
         where: {
           user: {
             id: userId.toString(),
@@ -120,9 +122,9 @@ export class MediaService {
         skip: (Number(page) - 1) * 10,
         take: 10,
       });
-
       return {
         data: res,
+        hasMore: length > Number(page) * 10,
       };
     } catch (error) {
       console.log(error);
@@ -180,9 +182,13 @@ export class MediaService {
     // return readFileSync(`./uploads/${email}/${category}/${media}`);
     // // return res;
     // const media = res.name.split(`${email}/`)[1];
-    // return createReadStream(join(`./uploads/${email}/${category}/${media}`), {
-    //   autoClose: true,
-    // });
+
+    // return createReadStream(
+    //   join(`./uploads/${email}/${category}/${res.name}`),
+    //   {
+    //     autoClose: true,
+    //   },
+    // );
 
     return res;
   }
