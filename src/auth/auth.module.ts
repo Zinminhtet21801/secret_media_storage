@@ -11,6 +11,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 const { parsed } = dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
+console.log('====================================');
+console.log('parsed', parsed, 'process.env.NODE_ENV', process.env.NODE_ENV);
+console.log('====================================');
+
 @Module({
   imports: [
     forwardRef(() => UserModule),
