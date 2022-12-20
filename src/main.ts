@@ -22,7 +22,10 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
   app.enableCors({
-    origin: process.env.FRONT_END_URL,
+    origin:
+      process.env.NODE_ENV === 'production'
+        ? process.env.FRONT_END_URL
+        : 'http://localhost:3000',
     credentials: true,
   });
   app.use(cookieParser(process.env.COOKIE_SECRET_KEY));
