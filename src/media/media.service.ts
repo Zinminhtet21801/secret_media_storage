@@ -74,7 +74,7 @@ export class MediaService {
     try {
       const res = await this.mediaRepo.findBy({
         user: {
-          id: userId,
+          id: Number(userId),
         },
       });
 
@@ -111,7 +111,7 @@ export class MediaService {
       const [res, length] = await this.mediaRepo.findAndCount({
         where: {
           user: {
-            id: userId.toString(),
+            id: userId,
           },
           type:
             category === 'others'
@@ -174,7 +174,7 @@ export class MediaService {
       where: {
         id,
         user: {
-          id: userId.toString(),
+          id: userId,
         },
       },
     });

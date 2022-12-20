@@ -1,4 +1,4 @@
-var dotenv = require('dotenv').config();
+var dotenv = require('dotenv');
 var fs = require('fs');
 var path = require('path');
 // var variable = fs.readFileSync(path.resolve(__dirname, '.env.production'),'utf8');
@@ -7,6 +7,7 @@ var path = require('path');
 let parsed;
 
 if (process.env.NODE_ENV === 'production') {
+  dotenv = dotenv.config();
   parsed = {
     ETHEREAL_NAME: process.env.ETHEREAL_NAME,
     ETHEREAL_USERNAME: process.env.ETHEREAL_USERNAME,
@@ -23,10 +24,6 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   parsed = dotenv.config({ path: `.env.${process.env.NODE_ENV}` }).parsed;
 }
-
-console.log('====================================');
-console.log(parsed,process.env.ETHEREAL_NAME, process.env.NODE_ENV);
-console.log('====================================');
 
 var dbConfig = {
   synchronize: false,
@@ -77,6 +74,5 @@ switch (process.env.NODE_ENV) {
     break;
   // throw new Error('unknown environment');
 }
-
 
 module.exports = dbConfig;
