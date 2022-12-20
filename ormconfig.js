@@ -18,6 +18,7 @@ if (process.env.NODE_ENV === 'production') {
     JWT_REFRESH_SECRET_KEY: process.env.JWT_REFRESH_SECRET_KEY,
     JWT_EXPIRATION_TIME: process.env.JWT_EXPIRATION_TIME,
     FRONT_END_URL: process.env.FRONT_END_URL,
+    RAILWAY_POSTGRES_URL: process.env.RAILWAY_POSTGRES_URL,
   };
 } else {
   parsed = dotenv.config({ path: `.env.${process.env.NODE_ENV}` }).parsed;
@@ -51,7 +52,7 @@ switch (process.env.NODE_ENV) {
   case 'production':
     Object.assign(dbConfig, {
       type: 'postgres',
-      url: process.env.HEROKU_POSTGRES_URL,
+      url: parsed.RAILWAY_POSTGRES_URL,
       migrationsRun: true,
       entities: ['**/*.entity.js'],
       ssl: {
@@ -62,7 +63,7 @@ switch (process.env.NODE_ENV) {
   default:
     Object.assign(dbConfig, {
       type: 'postgres',
-      url: parsed.parsed.HEROKU_POSTGRES_URL,
+      url: process.env.RAILWAY_POSTGRES_URL,
       migrationsRun: true,
       entities: ['**/*.entity.js'],
       ssl: {
