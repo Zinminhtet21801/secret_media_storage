@@ -21,7 +21,15 @@ import { AuthService } from '../auth/auth.service';
 import { Cookies } from '../decorators/getCurrentUserCookie.decorator';
 import customLogger from '../logger/logger';
 import { ContactUsDTO } from './dtos/contact-us.dto';
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 
+@ApiTags('User')
 @Controller('user')
 @Serialize(UserDTO)
 // @UseGuards(JwtAuthGuard)
@@ -82,6 +90,30 @@ export class UserController {
   }
 
   @Post('login')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: {
+          type: 'string',
+          example: 'abcde@gmail.com',
+          description: 'Email of the user',
+        },
+        password: {
+          type: 'string',
+          example: 'Abcde123',
+          description: 'Password of the user',
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({
+    description: 'Login successful',
+    type: UserDTO,
+  })
+  @ApiBadRequestResponse({
+    description: 'Login failed',
+  })
   async login(
     @Body() body: Partial<UserCreateDTO>,
     // @Res({ passthrough: true }) res: Response,
