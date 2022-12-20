@@ -29,6 +29,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+const isProdMode = process.env.NODE_ENV === 'production';
+
 @ApiTags('User')
 @Controller('user')
 @Serialize(UserDTO)
@@ -54,9 +56,9 @@ export class UserController {
       .cookie('token', token.access_token, {
         // httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        sameSite: 'none',
-        secure: true,
-        domain: 'localhost',
+        sameSite: isProdMode ? 'none' : 'lax',
+        secure: isProdMode ? true : false,
+        domain: isProdMode ? process.env.FRONT_END_URL : 'localhost',
         path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
@@ -126,9 +128,9 @@ export class UserController {
       .cookie('token', token.access_token, {
         // httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        sameSite: 'none',
-        secure: true,
-        domain: 'localhost',
+        sameSite: isProdMode ? 'none' : 'lax',
+        secure: isProdMode ? true : false,
+        domain: isProdMode ? process.env.FRONT_END_URL : 'localhost',
         path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
@@ -198,7 +200,9 @@ export class UserController {
         // Uncomment below to set a secure cookie via https
         // sameSite: 'none',
         // secure: true,
-        domain: 'localhost',
+        sameSite: isProdMode ? 'none' : 'lax',
+        secure: isProdMode ? true : false,
+        domain: isProdMode ? process.env.FRONT_END_URL : 'localhost',
         path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
