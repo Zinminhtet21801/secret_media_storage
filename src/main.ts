@@ -13,20 +13,9 @@ const origin =
   process.env.NODE_ENV === 'production'
     ? process.env.FRONT_END_URL
     : 'http://localhost:3000';
-    
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.use('/uploads', express.static('uploads'));
-  const config = new DocumentBuilder()
-    .setTitle('Secret Media Storage API')
-    .setDescription('API for Secret Media Storage')
-    .setVersion('1.0')
-    .addTag('secret-media-storage')
-    .build();
-
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
-
   app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -39,6 +28,17 @@ async function bootstrap() {
     origin: origin,
     credentials: true,
   });
+  app.use('/uploads', express.static('uploads'));
+  const config = new DocumentBuilder()
+    .setTitle('Secret Media Storage API')
+    .setDescription('API for Secret Media Storage')
+    .setVersion('1.0')
+    .addTag('secret-media-storage')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
+
   app.use(cookieParser(process.env.COOKIE_SECRET_KEY));
   app.use(helmet());
   app.useStaticAssets(join(__dirname, '..', 'public'));
