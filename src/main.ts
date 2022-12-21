@@ -9,7 +9,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 const express = require('express');
 const PORT = process.env.PORT || 5000;
-
+const origin =
+  process.env.NODE_ENV === 'production'
+    ? process.env.FRONT_END_URL
+    : 'http://localhost:3000';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use('/uploads', express.static('uploads'));
@@ -23,11 +26,16 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    next();
+  });
+
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? process.env.FRONT_END_URL
-        : 'http://localhost:3000',
+    origin: origin,
     credentials: true,
   });
   app.use(cookieParser(process.env.COOKIE_SECRET_KEY));
