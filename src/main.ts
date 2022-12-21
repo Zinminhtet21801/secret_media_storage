@@ -13,6 +13,7 @@ const origin =
   process.env.NODE_ENV === 'production'
     ? process.env.FRONT_END_URL
     : 'http://localhost:3000';
+    
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use('/uploads', express.static('uploads'));
