@@ -17,6 +17,7 @@ const origin =
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.use(cookieParser(process.env.COOKIE_SECRET_KEY));
+  app.set('trust proxy', 1);
   app.use(function (req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');

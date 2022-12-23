@@ -128,7 +128,9 @@ export class UserController {
       .cookie('token', token.access_token, {
         // httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        sameSite: isProdMode ? 'none' : 'lax',
+        // sameSite: isProdMode ? 'none' : 'lax',
+        // secure: isProdMode ? true : false,
+        sameSite: 'none',
         secure: isProdMode ? true : false,
         // domain: isProdMode ? process.env.FRONT_END_URL : 'localhost',
         path: '/',
