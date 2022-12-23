@@ -31,6 +31,10 @@ import {
 
 const isProdMode = process.env.NODE_ENV === 'production';
 
+console.log('====================================');
+console.log({ isProdMode });
+console.log('====================================');
+
 @ApiTags('User')
 @Controller('user')
 @Serialize(UserDTO)
