@@ -132,7 +132,7 @@ export class UserController {
         // secure: isProdMode ? true : false,
         sameSite: 'none',
         secure: isProdMode ? true : false,
-        // domain: isProdMode ? process.env.FRONT_END_URL : 'localhost',
+        domain: isProdMode ? process.env.FRONT_END_URL : 'localhost',
         path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
