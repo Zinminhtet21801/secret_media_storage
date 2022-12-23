@@ -58,8 +58,8 @@ export class UserController {
         // Uncomment below to set a secure cookie via https
         sameSite: isProdMode ? 'none' : 'lax',
         secure: isProdMode ? true : false,
-        domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
-        path: '/',
+        // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
+        // path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
       .status(200)
@@ -132,8 +132,8 @@ export class UserController {
         // secure: isProdMode ? true : false,
         sameSite: 'none',
         secure: isProdMode ? true : false,
-        domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
-        path: '/',
+        // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
+        // path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
       .status(200)
@@ -204,8 +204,8 @@ export class UserController {
         // secure: true,
         sameSite: isProdMode ? 'none' : 'lax',
         secure: isProdMode ? true : false,
-        domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
-        path: '/',
+        // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
+        // path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
       .status(200)
