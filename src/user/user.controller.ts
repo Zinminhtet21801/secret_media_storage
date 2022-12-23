@@ -126,7 +126,7 @@ export class UserController {
 
     res
       .cookie('token', token.access_token, {
-        httpOnly: true,
+        // httpOnly: true,
         // Uncomment below to set a secure cookie via https
         // sameSite: isProdMode ? 'none' : 'lax',
         // secure: isProdMode ? true : false,
