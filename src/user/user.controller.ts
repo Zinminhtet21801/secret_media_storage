@@ -31,10 +31,6 @@ import {
 
 const isProdMode = process.env.NODE_ENV === 'production';
 
-console.log('====================================');
-console.log({ isProdMode });
-console.log('====================================');
-
 @ApiTags('User')
 @Controller('user')
 @Serialize(UserDTO)
@@ -145,9 +141,9 @@ export class UserController {
         fullName,
         email,
         refreshToken: refreshToken.refreshToken,
-      });
-    // .send();
-    customLogger.log('debug', 'Login successful');
+      })
+      .send();
+    // customLogger.log('debug', 'Login successful');
     // return user;
   }
 
