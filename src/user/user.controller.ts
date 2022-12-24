@@ -130,7 +130,7 @@ export class UserController {
         // Uncomment below to set a secure cookie via https
         // sameSite: isProdMode ? 'none' : 'lax',
         // secure: isProdMode ? true : false,
-        // sameSite: 'none',
+        sameSite: 'none',
         // secure: isProdMode ? true : false,
         // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
         // path: '/',
