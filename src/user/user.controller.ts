@@ -134,7 +134,7 @@ export class UserController {
         secure: isProdMode ? true : false,
         // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
         // path: '/',
-        // expires: new Date(Date.now() + 200000 + +200000 + +200000),
+        expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
       .status(200)
       .json({
