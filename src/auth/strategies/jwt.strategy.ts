@@ -4,6 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import * as dotenv from 'dotenv';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 dotenv.config();
 
 @Injectable()
@@ -13,8 +14,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     configService: ConfigService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      // jwtFromRequest: ExtractJwt.fromHeader('Cookie'),
+      // jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req: Request) => req?.headers?.cookie?.split('=')[1],
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_SECRET_KEY'),
     });
@@ -33,7 +34,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // }
 
   async validate(payload: any) {
+    console.log('====================================');
+    console.log(payload, 'JERE');
+    console.log('====================================');
     // This is where the req.user is set
-    return { id: payload.id, fullName: payload.fullName, email: payload.email};
+    return { id: payload.id, fullName: payload.fullName, email: payload.email };
   }
 }
