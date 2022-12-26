@@ -5,6 +5,7 @@ import { AuthService } from 'src/auth/auth.service';
 import { In, Not, Repository } from 'typeorm';
 import { fileTypeMatcherHelpers } from './helpers/filepath.helpers';
 import { Media } from './media.entity';
+import { DecryptedJWT } from 'src/assets/customTypes';
 
 @Injectable()
 export class MediaService {
@@ -26,10 +27,13 @@ export class MediaService {
     }
   }
 
-  async getItemByName(name: string) {
+  async getItemByName(userId: number, name: string) {
     try {
       const res = await this.mediaRepo.findOne({
         where: {
+          user: {
+            id: Number(userId),
+          },
           name,
         },
       });
@@ -40,14 +44,14 @@ export class MediaService {
   }
 
   async uploadFiles(
-    user: object,
+    user: DecryptedJWT,
     userEmail: string,
     referenceFileName: string,
     fileType: string,
     mimeType: string,
   ) {
     const type = fileTypeMatcherHelpers({ fileType });
-    const checkFileExist = await this.getItemByName(referenceFileName);
+    const checkFileExist = await this.getItemByName(user.id, referenceFileName);
     if (checkFileExist) {
       throw new HttpException('File already exist', 400);
     }
