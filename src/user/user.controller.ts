@@ -54,10 +54,9 @@ export class UserController {
     }
     res
       .cookie('token', token.access_token, {
-        // httpOnly: true,
+        httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        // sameSite: isProdMode ? 'none' : 'lax',
-        sameSite: 'none',
+        sameSite: isProdMode ? 'none' : 'lax',
         secure: isProdMode ? true : false,
         // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
         // path: '/',
@@ -127,15 +126,13 @@ export class UserController {
 
     res
       .cookie('token', token.access_token, {
-        // httpOnly: true,
+        httpOnly: true,
         // Uncomment below to set a secure cookie via https
-        // sameSite: isProdMode ? 'none' : 'lax',
-        // secure: isProdMode ? true : false,
-        sameSite: 'none',
+        sameSite: isProdMode ? 'none' : 'lax',
         secure: isProdMode ? true : false,
         // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
         // path: '/',
-        expires: new Date(Date.now() + 200000 + +200000 + +200000),
+        // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
       .status(200)
       .json({
@@ -199,12 +196,11 @@ export class UserController {
 
     res
       .cookie('token', '', {
-        // httpOnly: true,
+        httpOnly: true,
         // Uncomment below to set a secure cookie via https
         // sameSite: 'none',
         // secure: true,
-        // sameSite: isProdMode ? 'none' : 'lax',
-        sameSite: 'none',
+        sameSite: isProdMode ? 'none' : 'lax',
         secure: isProdMode ? true : false,
         // domain: isProdMode ? process.env.FRONT_END_DOMAIN : 'localhost',
         // path: '/',
