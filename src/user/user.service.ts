@@ -6,12 +6,15 @@ import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
 import { ContactUsDTO } from './dtos/contact-us.dto';
+import { ConfigService } from '@nestjs/config';
+
 const nodemailer = require('nodemailer');
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     private readonly authService: AuthService,
+    private config: ConfigService
   ) {}
 
   async findUser(email: string) {
@@ -50,7 +53,7 @@ export class UserService {
 
   async saveUser(createUser: UserCreateDTO) {
     const existedUser = await this.findUser(createUser.email);
-    
+
     if (existedUser) {
       throw new BadRequestException('User already exists!!!');
     }
@@ -59,13 +62,13 @@ export class UserService {
       password: await this.hashPassword(createUser.password),
     };
     const insertedUser = await this.userRepo.insert(incomingUser);
-    
+
     const user = {
       fullName: createUser.fullName,
       email: createUser.email,
-      id: insertedUser.identifiers[0].id
-    }
-    
+      id: insertedUser.identifiers[0].id,
+    };
+
     const jwtUser = await this.authService.signJWT(user);
     const refreshJwtToken = await this.authService.signRefreshJWT(user);
 
@@ -110,13 +113,16 @@ export class UserService {
       text,
     };
 
-    const info = await transporter.sendMail(mailDetails, function (err, data) {
-      if (err) {
-        console.log('Error Occurs', err);
-      } else {
-        console.log('Email sent successfully');
-      }
-    });
+    const info = await transporter.sendMail(
+      mailDetails,
+      function (err: unknown, data: unknown) {
+        if (err) {
+          console.log('Error Occurs', err);
+        } else {
+          console.log('Email sent successfully');
+        }
+      },
+    );
   }
   async contactUs(email: string, fullName: string, message: string) {
     this.sendMail(
@@ -170,7 +176,7 @@ export class UserService {
     const hashedPassword = await this.hashPassword(inputPassword);
     const updatedUser = await this.userRepo.update(user.id, {
       password: hashedPassword,
-    });
+    })
     return updatedUser;
   }
 }

@@ -10,7 +10,7 @@ import { DataSource } from "typeorm"
 //   migrationsRun: process.env.NODE_ENV === 'test' ? true : false,
 // });
 
-// console.log(dbConfig);
+console.log(dbConfig, 'dsfjlskdj');
 
 const ormconfig = new DataSource({
   ...dbConfig,

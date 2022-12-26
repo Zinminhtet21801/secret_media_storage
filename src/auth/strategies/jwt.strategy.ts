@@ -34,9 +34,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   // }
 
   async validate(payload: any) {
-    console.log('====================================');
-    console.log(payload, 'JERE');
-    console.log('====================================');
     // This is where the req.user is set
     return { id: payload.id, fullName: payload.fullName, email: payload.email };
   }

@@ -6,8 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
-import { UserService } from '../user/user.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 let parsed;
@@ -26,7 +25,7 @@ if (process.env.NODE_ENV === 'production') {
     FRONT_END_URL: process.env.FRONT_END_URL,
   };
 } else {
-  parsed = dotenv.config({ path: `.env.${process.env.NODE_ENV}` }).parsed;
+  parsed = dotenv.config({ path: `.env.development` }).parsed;
 }
 
 @Module({

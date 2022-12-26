@@ -15,17 +15,15 @@ import { MediaService } from './media/media.service';
 import { MediaModule } from './media/media.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { configuration } from './config/configuration';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(
-      process.env.NODE_ENV !== 'production'
-        ? {
-            isGlobal: true,
-            envFilePath: `.env.${process.env.NODE_ENV}`,
-          }
-        : {},
-    ),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: process.env.NODE_ENV === 'development' ? '.env.development' : '.env.production',
+      load: [configuration],
+    }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'uploads'),
     }),
