@@ -21,7 +21,8 @@ import { configuration } from './config/configuration';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'development' ? '.env.development' : '.env',
+      envFilePath:
+        process.env.NODE_ENV === 'development' ? '.env.development' : '.env',
       load: [configuration],
     }),
     ServeStaticModule.forRoot({
