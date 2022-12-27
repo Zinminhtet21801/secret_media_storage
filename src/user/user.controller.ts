@@ -43,11 +43,8 @@ export class UserController {
 
   @Post('create')
   async saveUser(@Body() body: UserCreateDTO, @Res() res: Response) {
-    console.log(body);
-
     const { email, fullName, token, refreshToken } =
       await this.userService.saveUser(body);
-    console.log(email, fullName, token, refreshToken, 'HEREERRER');
 
     if (!email) {
       res.status(400).send();
@@ -76,7 +73,6 @@ export class UserController {
   @Get('profile')
   // getProfile(@Cookies('token') token: string, @Res() res: Response, @Req() req: Request) {
   getProfile(@Res() res: Response, @Req() req: any) {
-    console.log(req.user, 'COOKIES');
     // const {id, fullName, email } = req?.user
 
     res.json({
@@ -172,8 +168,6 @@ export class UserController {
 
   @Get('reset-password/:email')
   root(@Res() res: Response, @Param('email') email: string) {
-    console.log(email);
-
     return res.render('reset-password', {
       email: email,
     });
@@ -181,8 +175,6 @@ export class UserController {
 
   @Post('reset-password')
   async resetPassword(@Body() body: Partial<UserCreateDTO>) {
-    console.log(body);
-
     const user = await this.userService.resetPassword(
       body.email,
       body.password,
@@ -192,8 +184,6 @@ export class UserController {
 
   @Get('logout')
   async logout(@Req() req: Request, @Res() res: Response) {
-    console.log(req.cookies, 'HERES COOKIES');
-
     res
       .cookie('token', '', {
         httpOnly: true,

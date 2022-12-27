@@ -76,11 +76,7 @@ export class MediaController {
           callback(null, path);
         },
         filename: (req, file, cb) => {
-          console.log(file);
-
           referenceFileName = file.originalname;
-
-          // cb(null, file.originalname + '-' + Date.now() + mimes[file.mimetype]);
           cb(null, file.originalname);
         },
       }),

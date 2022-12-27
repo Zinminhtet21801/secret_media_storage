@@ -8,16 +8,9 @@ import { AuthModule } from '../auth/auth.module';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    forwardRef(() => AuthModule),
-  ],
+  imports: [TypeOrmModule.forFeature([User]), forwardRef(() => AuthModule)],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],
 })
-export class UserModule {
-  constructor(private readonly config: ConfigService){
-    console.log('config', config.get('BASE_URL'));
-  }
-}
+export class UserModule {}

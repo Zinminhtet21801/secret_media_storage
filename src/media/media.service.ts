@@ -144,9 +144,6 @@ export class MediaService {
   async deleteMediaItem(userId: string, email: string, mediaId: string) {
     try {
       const file = await this.getItemById(mediaId);
-      console.log('====================================');
-      console.log(file);
-      console.log('====================================');
       if (!file) {
         return {
           message: 'File not found',
@@ -160,7 +157,6 @@ export class MediaService {
             console.log(error);
           }
         });
-        // console.log(res);
         return res;
       }
     } catch (error) {

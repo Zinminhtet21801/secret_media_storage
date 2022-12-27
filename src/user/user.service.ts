@@ -6,7 +6,6 @@ import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
 import { ContactUsDTO } from './dtos/contact-us.dto';
-import { ConfigService } from '@nestjs/config';
 
 const nodemailer = require('nodemailer');
 @Injectable()
@@ -14,7 +13,6 @@ export class UserService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     private readonly authService: AuthService,
-    private config: ConfigService
   ) {}
 
   async findUser(email: string) {
@@ -31,7 +29,6 @@ export class UserService {
     if (!isValid) {
       throw new BadRequestException('Password is incorrect!!!');
     }
-    console.log(user);
 
     const jwtUser = await this.authService.signJWT(user);
     const refreshJwtToken = await this.authService.signRefreshJWT(user);
@@ -167,8 +164,6 @@ export class UserService {
   }
 
   async resetPassword(inputEmail: string, inputPassword: string) {
-    console.log(inputEmail, inputPassword);
-
     const user = await this.findUser(inputEmail);
     if (!user) {
       throw new BadRequestException('User not found!!!');
@@ -176,7 +171,7 @@ export class UserService {
     const hashedPassword = await this.hashPassword(inputPassword);
     const updatedUser = await this.userRepo.update(user.id, {
       password: hashedPassword,
-    })
+    });
     return updatedUser;
   }
 }
