@@ -38,11 +38,13 @@ resetButton.addEventListener('click', function (e) {
       email: email,
       password: newPwd.value,
     }),
-  }).then(function(res){
-    if(res.ok){
-      window.close()
-    } else {
-      alert('Error');
-    }
-  });
+  })
+    .then(function (res) {
+      if (res.ok) {
+        window.close();
+      } else {
+        alert('Error');
+      }
+    })
+    .catch((err) => console.log(e));
 });
