@@ -2,23 +2,30 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { unlink } from 'fs';
 import { AuthService } from 'src/auth/auth.service';
-import { In, Not, Repository } from 'typeorm';
+// import { In, Not, Repository } from 'typeorm';
 import { fileTypeMatcherHelpers } from './helpers/filepath.helpers';
 import { Media } from './media.entity';
 import { DecryptedJWT } from 'src/assets/customTypes';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class MediaService {
   constructor(
-    @InjectRepository(Media) private mediaRepo: Repository<Media>,
+    // @InjectRepository(Media) private mediaRepo: Repository<Media>,
     private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async getItemById(id: string) {
     try {
-      const res = await this.mediaRepo.findOne({
+      // const res = await this.mediaRepo.findOne({
+      //   where: {
+      //     id,
+      //   },
+      // });
+      const res = this.prisma.media.findFirst({
         where: {
-          id,
+          id: Number(id),
         },
       });
       return res;
@@ -29,7 +36,16 @@ export class MediaService {
 
   async getItemByName(userId: number, name: string) {
     try {
-      const res = await this.mediaRepo.findOne({
+      // const res = await this.mediaRepo.findOne({
+      //   where: {
+      //     user: {
+      //       id: Number(userId),
+      //     },
+      //     name,
+      //   },
+      // });
+
+      const res = await this.prisma.media.findFirst({
         where: {
           user: {
             id: Number(userId),
@@ -55,14 +71,30 @@ export class MediaService {
     if (checkFileExist) {
       throw new HttpException('File already exist', 400);
     }
-    const newFile = await this.mediaRepo.create({
-      name: `${referenceFileName}`,
-      user,
-      type,
-      mimeType,
+    // const newFile = await this.mediaRepo.create({
+    //   name: `${referenceFileName}`,
+    //   user,
+    //   type,
+    //   mimeType,
+    // });
+
+    const res = await this.prisma.media.create({
+      include: {
+        user: true,
+      },
+      data: {
+        name: `${referenceFileName}`,
+        user: {
+          connect: {
+            id: user.id,
+          },
+        },
+        type,
+        mimeType,
+      },
     });
 
-    const res = await this.mediaRepo.save(newFile);
+    // const res = await this.mediaRepo.save(newFile);
     return res;
   }
 
@@ -76,9 +108,17 @@ export class MediaService {
     };
 
     try {
-      const res = await this.mediaRepo.findBy({
-        user: {
-          id: Number(userId),
+      // const res = await this.mediaRepo.findBy({
+      //   user: {
+      //     id: Number(userId),
+      //   },
+      // });
+
+      const res = await this.prisma.media.findMany({
+        where: {
+          user: {
+            id: Number(userId),
+          },
         },
       });
 
@@ -112,20 +152,90 @@ export class MediaService {
    */
   async getCategoriesItems(userId: number, category: string, page: string) {
     try {
-      const [res, length] = await this.mediaRepo.findAndCount({
-        where: {
-          user: {
-            id: userId,
-          },
-          type:
-            category === 'others'
-              ? Not(In(['image', 'audio', 'video']))
-              : category,
-        },
+      // const [res, length] = await this.mediaRepo.findAndCount({
+      //   where: {
+      //     user: {
+      //       id: userId,
+      //     },
+      //     type:
+      //       category === 'others'
+      //         ? Not(In(['image', 'audio', 'video']))
+      //         : category,
+      //   },
 
-        skip: (Number(page) - 1) * 10,
-        take: 10,
-      });
+      //   skip: (Number(page) - 1) * 10,
+      //   take: 10,
+      // });
+
+      //TODO: Fix this
+
+      const [res, length] = await this.prisma.$transaction([
+        this.prisma.media.findMany({
+          where: {
+            user: {
+              id: userId,
+            },
+            type:
+              category === 'others'
+                ? {
+                    notIn: ['image', 'audio', 'video'],
+                  }
+                : category,
+          },
+          skip: (Number(page) - 1) * 10,
+          take: 10,
+        }),
+        this.prisma.media.count({
+          where: {
+            user: {
+              id: userId,
+            },
+            type:
+              category === 'others'
+                ? {
+                    notIn: ['image', 'audio', 'video'],
+                  }
+                : category,
+          },
+        }),
+      ]);
+
+      // const res = await this.prisma.media.aggregate({
+      //   _count: {
+      //     id: true,
+      //   },
+      //   where: {
+      //     user: {
+      //       id: userId,
+      //     },
+      //     type:
+      //       category === 'others'
+      //         ? {
+      //             notIn: ['image', 'audio', 'video'],
+      //           }
+      //         : category,
+      //   },
+      //   skip: (Number(page) - 1) * 10,
+      //   take: 10,
+      // });
+
+      // const res = await this.prisma.media.findMany({
+      //   where: {
+      //     user: {
+      //       id: userId,
+      //     },
+      //     type:
+      //       category === 'others'
+      //         ? {
+      //             notIn: ['image', 'audio', 'video'],
+      //           }
+      //         : category,
+      //   },
+      //   skip: (Number(page) - 1) * 10,
+      //   take: 10,
+
+      // });
+
       return {
         data: res,
         hasMore: length > Number(page) * 10,
@@ -149,9 +259,16 @@ export class MediaService {
           message: 'File not found',
         };
       } else {
-        const res = await this.mediaRepo.delete({
-          id: mediaId,
+        // const res = await this.mediaRepo.delete({
+        //   id: mediaId,
+        // });
+
+        const res = await this.prisma.media.delete({
+          where: {
+            id: Number(mediaId),
+          },
         });
+
         unlink(`./uploads/${email}/${file.type}/${file.name}`, (error) => {
           if (error) {
             console.log(error);
@@ -170,14 +287,24 @@ export class MediaService {
     email: string,
     category: string,
   ) {
-    const res = await this.mediaRepo.findOne({
+    // const res = await this.mediaRepo.findOne({
+    //   where: {
+    //     id,
+    //     user: {
+    //       id: userId,
+    //     },
+    //   },
+    // });
+
+    const res = await this.prisma.media.findFirst({
       where: {
-        id,
+        id: Number(id),
         user: {
           id: userId,
         },
       },
     });
+
     // const media = res.name.split(`${email}/`)[1];
     // return readFileSync(`./uploads/${email}/${category}/${media}`);
     // // return res;

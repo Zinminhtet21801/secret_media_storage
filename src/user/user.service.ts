@@ -6,17 +6,23 @@ import { User } from './user.entity';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../auth/auth.service';
 import { ContactUsDTO } from './dtos/contact-us.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 const nodemailer = require('nodemailer');
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User) private userRepo: Repository<User>,
+    // @InjectRepository(User) private userRepo: Repository<User>,
+    private prisma: PrismaService,
     private readonly authService: AuthService,
   ) {}
 
   async findUser(email: string) {
-    const user = await this.userRepo.findOneBy({ email: email });
+    // const user = await this.userRepo.findOneBy({ email: email });
+    const user = await this.prisma.user.findFirst({ where: { email: email } });
+    console.log('====================================');
+    console.log(user);
+    console.log('====================================');
     return user;
   }
 
@@ -58,12 +64,15 @@ export class UserService {
       ...createUser,
       password: await this.hashPassword(createUser.password),
     };
-    const insertedUser = await this.userRepo.insert(incomingUser);
+    // const insertedUser = await this.userRepo.insert(incomingUser);
+    const insertedUser = await this.prisma.user.create({
+      data: incomingUser,
+    });
 
     const user = {
       fullName: createUser.fullName,
       email: createUser.email,
-      id: insertedUser.identifiers[0].id,
+      id: insertedUser.id,
     };
 
     const jwtUser = await this.authService.signJWT(user);
@@ -84,7 +93,10 @@ export class UserService {
     if (!user) {
       throw new BadRequestException('User not found!!!');
     }
-    const deletedUser = await this.userRepo.delete(user.id);
+    // const deletedUser = await this.userRepo.delete(user.id);
+    const deletedUser = await this.prisma.user.delete({
+      where: { id: user.id },
+    });
     return deletedUser;
   }
 
@@ -169,8 +181,12 @@ export class UserService {
       throw new BadRequestException('User not found!!!');
     }
     const hashedPassword = await this.hashPassword(inputPassword);
-    const updatedUser = await this.userRepo.update(user.id, {
-      password: hashedPassword,
+    // const updatedUser = await this.userRepo.update(user.id, {
+    //   password: hashedPassword,
+    // });
+    const updatedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
     });
     return updatedUser;
   }
