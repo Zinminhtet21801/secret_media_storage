@@ -21,7 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "migrate:dev": "dotenv -e .env.development -- npx prisma migrate dev --name postgres-init",
-    "migrate:prod": "dotenv -e .env.production -- npx prisma migrate dev --name postgres-init",
+    "migrate:prod": "npx prisma migrate dev --name postgres-init",
     "db:push:dev": "dotenv -e .env.development -- npx prisma db push",
     "db:push:prod": "npx prisma db push",
     "typeorm": "NODE_ENV=production typeorm-ts-node-commonjs -d src/ormconfig.ts",
