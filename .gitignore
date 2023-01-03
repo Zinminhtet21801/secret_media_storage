@@ -16,6 +16,11 @@ lerna-debug.log*
 .env.development
 .env.production
 
+comment prisma's migration files
+# Prisma
+# Uncomment the following line if you want to check your database schema into your repository
+migrations
+
 todo.txt
 
 # OS
