@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_URL")
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  fullName String
+  email    String 
+  password String
+  media    Media[] 
+}
+
+model Media {
+  id       Int    @id @default(autoincrement())
+  name     String
+  type     String
+  mimeType String
+  userId Int 
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+
+
+// model media {
+//   id       Int    @id(map: "PK_f4e0fcac36e050de337b670d8bd") @default(autoincrement())
+//   name     String @db.VarChar
+//   type     String @db.VarChar
+//   mimeType String @db.VarChar
+//   userId   Int?
+//   user     user?  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "FK_0db866835bf356d896e1892635d")
+// }
+
+// model migrations {
+//   id        Int    @id(map: "PK_8c82d7f526340ab734260ea46be") @default(autoincrement())
+//   timestamp BigInt
+//   name      String @db.VarChar
+// }
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+// model typeorm_metadata {
+//   type     String  @db.VarChar
+//   database String? @db.VarChar
+//   schema   String? @db.VarChar
+//   table    String? @db.VarChar
+//   name     String? @db.VarChar
+//   value    String?
+
+//   @@ignore
+// }
+
+// model user {
+//   id       Int     @id(map: "PK_cace4a159ff9f2512dd42373760") @default(autoincrement())
+//   fullName String  @db.VarChar
+//   email    String  @db.VarChar
+//   password String  @db.VarChar
+//   media    media[]
+// }
