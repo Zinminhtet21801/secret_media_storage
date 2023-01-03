@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
+// import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
@@ -16,19 +16,21 @@ import { MediaModule } from './media/media.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { configuration } from './config/configuration';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath:
-        process.env.NODE_ENV === 'development' ? '.env.development' : '.env',
+        process.env.NODE_ENV === 'development' ? '.env.development' : '.env.production',
       load: [configuration],
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'uploads'),
     }),
-    TypeOrmModule.forRoot(),
+    // TypeOrmModule.forRoot(),
+    PrismaModule,
     UserModule,
     MediaModule,
     // AuthModule,
