@@ -9,6 +9,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 const express = require('express');
 const PORT = process.env.PORT || 5000;
+
 const origin =
   process.env.NODE_ENV === 'production'
     ? process.env.FRONT_END_URL
@@ -16,6 +17,11 @@ const origin =
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: false,
+    }),
+  );
   app.use(cookieParser());
   app.set('trust proxy', 1);
   app.use(function (req, res, next) {
@@ -41,8 +47,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  // app.use(helmet());
-  // app.use(helmet.crossOriginResourcePolicy({policy: "cross-origin"}));
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('hbs');
