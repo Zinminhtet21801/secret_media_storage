@@ -19,10 +19,11 @@ export class UserService {
 
   async findUser(email: string) {
     // const user = await this.userRepo.findOneBy({ email: email });
-    const user = await this.prisma.user.findFirst({ where: { email: email } });
-    console.log('====================================');
-    console.log(user);
-    console.log('====================================');
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: email,
+      },
+    });
     return user;
   }
 
@@ -56,7 +57,6 @@ export class UserService {
 
   async saveUser(createUser: UserCreateDTO) {
     const existedUser = await this.findUser(createUser.email);
-
     if (existedUser) {
       throw new BadRequestException('User already exists!!!');
     }
