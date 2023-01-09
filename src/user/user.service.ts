@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserCreateDTO } from './dtos/user-create.dto';
@@ -9,6 +13,18 @@ import { ContactUsDTO } from './dtos/contact-us.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 const nodemailer = require('nodemailer');
+
+type SaveUserType = {
+  token: {
+    access_token: string;
+  };
+  refreshToken: {
+    refreshToken: string;
+  };
+  fullName: string;
+  email: string;
+};
+
 @Injectable()
 export class UserService {
   constructor(
@@ -27,10 +43,10 @@ export class UserService {
     return user;
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string): Promise<unknown> {
     const user = await this.findUser(email);
     if (!user) {
-      throw new BadRequestException('User not found!!!');
+      throw new NotFoundException('User not found!!!');
     }
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
@@ -55,7 +71,7 @@ export class UserService {
     return hashedPassword;
   }
 
-  async saveUser(createUser: UserCreateDTO) {
+  async saveUser(createUser: UserCreateDTO): Promise<SaveUserType | unknown> {
     const existedUser = await this.findUser(createUser.email);
     if (existedUser) {
       throw new BadRequestException('User already exists!!!');
@@ -88,7 +104,7 @@ export class UserService {
     // return user;
   }
 
-  async deleteUser(email: string) {
+  async deleteUser(email: string): Promise<User | unknown> {
     const user = await this.findUser(email);
     if (!user) {
       throw new BadRequestException('User not found!!!');
@@ -133,6 +149,7 @@ export class UserService {
       },
     );
   }
+
   async contactUs(email: string, fullName: string, message: string) {
     this.sendMail(
       email,
@@ -156,7 +173,7 @@ export class UserService {
     `;
 
     // (from email, to email, subject, fullName, text)
-    this.sendMail(
+    await this.sendMail(
       process.env.GMAIL_USERNAME,
       email,
       'Forgot Password',

@@ -31,6 +31,17 @@ import {
 
 const isProdMode = process.env.NODE_ENV === 'production';
 
+type SaveUserType = {
+  token: {
+    access_token: string;
+  };
+  refreshToken: {
+    refreshToken: string;
+  };
+  fullName: string;
+  email: string;
+};
+
 @ApiTags('User')
 @Controller('user')
 @Serialize(UserDTO)
@@ -44,10 +55,9 @@ export class UserController {
   @Post('create')
   async saveUser(@Body() body: UserCreateDTO, @Res() res: Response) {
     const { email, fullName, token, refreshToken } =
-      await this.userService.saveUser(body);
-
+      await this.userService.saveUser(body) as SaveUserType;
     if (!email) {
-      res.status(400).send();
+      return res.status(401).send();
     }
     res
       .cookie('token', token.access_token, {
@@ -59,14 +69,13 @@ export class UserController {
         // path: '/',
         // expires: new Date(Date.now() + 200000 + +200000 + +200000),
       })
-      .status(200)
+      .status(201)
       .json({
         fullName,
         email,
         refreshToken: refreshToken.refreshToken,
       })
       .send();
-    res.status(201).send();
   }
 
   @UseGuards(JwtAuthGuard)
@@ -74,7 +83,6 @@ export class UserController {
   // getProfile(@Cookies('token') token: string, @Res() res: Response, @Req() req: Request) {
   getProfile(@Res() res: Response, @Req() req: any) {
     // const {id, fullName, email } = req?.user
-
     res.json({
       fullName: req?.user?.fullName,
       email: req?.user?.email,
@@ -118,10 +126,14 @@ export class UserController {
     @Res({ passthrough: false }) res: Response,
   ) {
     const { token, fullName, email, refreshToken } =
-      await this.userService.login(body.email, body.password);
+      await this.userService.login(body.email, body.password) as SaveUserType;
 
-    res
-      .cookie('token', token.access_token, {
+    if (!token) {
+      return res.status(401).send();
+    }
+
+    return res
+      .cookie('token', token?.access_token, {
         httpOnly: true,
         // Uncomment below to set a secure cookie via https
         sameSite: isProdMode ? 'none' : 'lax',
@@ -134,7 +146,7 @@ export class UserController {
       .json({
         fullName,
         email,
-        refreshToken: refreshToken.refreshToken,
+        refreshToken: refreshToken?.refreshToken,
       })
       .send();
     // customLogger.log('debug', 'Login successful');
@@ -148,7 +160,11 @@ export class UserController {
       if (!refreshToken) {
         throw new UnauthorizedException();
       }
-      await this.authService.signRefreshJWT(refreshToken);
+      const { refreshToken: signedRefreshToken } =
+        await this.authService.signRefreshJWT(refreshToken);
+      return res.status(201).json({
+        refreshToken: signedRefreshToken,
+      });
     } catch (error) {
       customLogger.log('error', error);
     }
@@ -200,7 +216,7 @@ export class UserController {
       .json({
         fullName: '',
         email: '',
-      });
-    // .send();
+      })
+    .send();
   }
 }
