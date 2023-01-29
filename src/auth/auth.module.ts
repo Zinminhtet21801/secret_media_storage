@@ -5,7 +5,6 @@ import { UserModule } from '../user/user.module';
 import { AuthService } from '../auth/auth.service';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { LocalStrategy } from './strategies/local.strategy';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
@@ -42,7 +41,6 @@ if (process.env.NODE_ENV === 'production') {
   providers: [
     AuthService,
     JwtStrategy,
-    LocalStrategy,
     JwtService,
     ConfigService,
     JwtAuthGuard,
