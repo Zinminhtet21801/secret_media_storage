@@ -43,7 +43,7 @@ export class UserService {
     return user;
   }
 
-  async login(email: string, password: string): Promise<unknown> {
+  async login(email: string, password: string): Promise<unknown> | never {
     const user = await this.findUser(email);
     if (!user) {
       throw new NotFoundException('User not found!!!');

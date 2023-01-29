@@ -14,9 +14,9 @@ export const filePathHelpers = ({ email, fileType }: FilePath) => {
     fileType.includes('audio') ||
     fileType.includes('video')
   ) {
-    path = `./uploads/${email}/${fileType}`;
+    path = `${email}/${fileType}`;
   } else {
-    path = `./uploads/${email}/others`;
+    path = `${email}/others`;
   }
   return path;
 };
