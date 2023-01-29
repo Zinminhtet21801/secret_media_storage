@@ -1,12 +1,16 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { unlink } from 'fs';
-import { AuthService } from 'src/auth/auth.service';
+// import { InjectRepository } from '@nestjs/typeorm';
+import fs from 'fs';
+import { AuthService } from '../auth/auth.service';
 // import { In, Not, Repository } from 'typeorm';
 import { fileTypeMatcherHelpers } from './helpers/filepath.helpers';
-import { Media } from './media.entity';
-import { DecryptedJWT } from 'src/assets/customTypes';
+// import { Media } from './media.entity';
+import { DecryptedJWT } from '../assets/customTypes';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Config, s3 } from './media.module';
+
+const partSize = 5 * 1024 * 1024; // 5MB
+const maxUploadTries = 3;
 
 @Injectable()
 export class MediaService {
@@ -59,18 +63,30 @@ export class MediaService {
     }
   }
 
+  async checkFileExist(user: DecryptedJWT, fileName: string) {
+    try {
+      const isFileExist = await this.getItemByName(user.id, fileName);
+      if (isFileExist) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   async uploadFiles(
     user: DecryptedJWT,
     userEmail: string,
-    referenceFileName: string,
+    fileName: string,
     fileType: string,
     mimeType: string,
   ) {
     const type = fileTypeMatcherHelpers({ fileType });
-    const checkFileExist = await this.getItemByName(user.id, referenceFileName);
-    if (checkFileExist) {
-      throw new HttpException('File already exist', 400);
-    }
+    // const checkFileExist = await this.getItemByName(user.id, fileName);
+    // if (checkFileExist) {
+    //   throw new HttpException('File already exist', 400);
+    // }
     // const newFile = await this.mediaRepo.create({
     //   name: `${referenceFileName}`,
     //   user,
@@ -83,7 +99,7 @@ export class MediaService {
         user: true,
       },
       data: {
-        name: `${referenceFileName}`,
+        name: `${fileName}`,
         user: {
           connect: {
             id: user.id,
@@ -269,11 +285,21 @@ export class MediaService {
           },
         });
 
-        unlink(`./uploads/${email}/${file.type}/${file.name}`, (error) => {
-          if (error) {
-            console.log(error);
-          }
-        });
+        s3.deleteObject(
+          {
+            Bucket: S3Config.bucketName,
+            Key: `${email}/${file.type}/${file.name}`,
+          },
+          (err, data) => {
+            console.log(err, data);
+          },
+        );
+
+        // unlink(`./uploads/${email}/${file.type}/${file.name}`, (error) => {
+        //   if (error) {
+        //     console.log(error);
+        //   }
+        // });
         return res;
       }
     } catch (error) {
@@ -305,18 +331,150 @@ export class MediaService {
       },
     });
 
-    // const media = res.name.split(`${email}/`)[1];
-    // return readFileSync(`./uploads/${email}/${category}/${media}`);
-    // // return res;
-    // const media = res.name.split(`${email}/`)[1];
-
-    // return createReadStream(
-    //   join(`./uploads/${email}/${category}/${res.name}`),
-    //   {
-    //     autoClose: true,
-    //   },
-    // );
-
     return res;
+  }
+
+  // async getMultipartPreSignedUrls() {
+  //   const { fileKey, fileId, parts } = req.body
+  //   const multipartParams = {
+  //   Bucket: BUCKET_NAME,
+  //   Key: fileKey,
+  //   UploadId: fileId,
+  //   }const promises = []
+  //   for (let index = 0; index < parts; index++) {
+  //   promises.push(
+  //   s3.getSignedUrlPromise("uploadPart", {
+  //   ...multipartParams,
+  //   PartNumber: index + 1,
+  //   }),
+  //   )
+  //   }
+  //   const signedUrls = await Promise.all(promises)
+  //   // assign to each URL the index of the part to which it corresponds
+  //   const partSignedUrlList = signedUrls.map((signedUrl, index) => {
+  //   return {
+  //   signedUrl: signedUrl,
+  //   PartNumber: index + 1,
+  //   }
+  //   })
+  //   res.send({
+  //   parts: partSignedUrlList,
+  //   })
+  //   }
+
+  async initializeMultipartUpload(multipartParams: {
+    Bucket: string;
+    Key: string;
+  }) {
+    const multipartUpload = await s3
+      .createMultipartUpload(multipartParams)
+      .promise();
+    return multipartUpload;
+  }
+
+  async getMultipartPreSignedUrls(
+    parts: number,
+    multipartParams: {
+      Bucket: string;
+      Key: string;
+      UploadId: string;
+    },
+  ) {
+    const promises = [];
+    for (let index = 0; index < parts; index++) {
+      promises.push(
+        s3.getSignedUrlPromise('uploadPart', {
+          ...multipartParams,
+          PartNumber: index + 1,
+        }),
+      );
+    }
+    const signedUrls = await Promise.all(promises);
+    // assign to each URL the index of the part to which it corresponds
+    const partSignedUrlList = signedUrls.map((signedUrl, index) => {
+      return {
+        signedUrl: signedUrl,
+        PartNumber: index + 1,
+      };
+    });
+    return {
+      parts: partSignedUrlList,
+    };
+  }
+
+  async startUpload(
+    key: string,
+    filePath: string,
+    mimeType: string,
+    fileSize: number,
+  ) {
+    // Initiate the multipart upload
+    // const createUploadResponse = await s3
+    //   .createMultipartUpload({
+    //     Bucket: S3Config.bucketName,
+    //     Key: key,
+    //     ContentType: mimeType,
+    //   })
+    //   .promise();
+    // const uploadId = createUploadResponse.UploadId;
+
+    // Read the file and split it into parts
+    console.log('====================================');
+    console.log(filePath);
+    console.log('====================================');
+    const file = fs.createReadStream(filePath);
+    let partNumber = 1;
+    let uploadedBytes = 0;
+    let parts = [];
+    console.log('====================================');
+    console.log(file);
+    console.log('====================================');
+
+    //TODO: Fix this
+
+    // while (uploadedBytes < fileSize) {
+    //   let end = uploadedBytes + partSize;
+    //   let part = {
+    //     Body: file.slice(uploadedBytes, end),
+    //     PartNumber: String(partNumber),
+    //   };
+    //   parts.push(part);
+    //   uploadedBytes = end;
+    //   partNumber++;
+    // }
+
+    // // Upload the parts in parallel
+    // const uploadPromises = parts.map(async (part) => {
+    //   try {
+    //     let uploadPartResponse = await s3
+    //       .uploadPart({
+    //         Bucket: S3Config.bucketName,
+    //         Key: key,
+    //         PartNumber: part.PartNumber,
+    //         UploadId: uploadId,
+    //         Body: part.Body,
+    //       })
+    //       .promise();
+    //     return { ETag: uploadPartResponse.ETag, PartNumber: part.PartNumber };
+    //   } catch (err) {
+    //     console.log(`Error uploading part: ${part.PartNumber}`);
+    //     throw err;
+    //   }
+    // });
+
+    // // Wait for all parts to be uploaded
+    // const partsInfo = await Promise.all(uploadPromises);
+
+    // // Complete the multipart upload
+    // await s3
+    //   .completeMultipartUpload({
+    //     Bucket: S3Config.bucketName,
+    //     Key: key,
+    //     UploadId: uploadId,
+    //     MultipartUpload: {
+    //       Parts: partsInfo,
+    //     },
+    //   })
+    //   .promise();
   }
 }

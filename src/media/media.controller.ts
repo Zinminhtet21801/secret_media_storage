@@ -4,41 +4,26 @@ import {
   Delete,
   Get,
   Header,
+  HttpException,
   Param,
   Post,
+  Put,
   Req,
   Res,
   StreamableFile,
-  UploadedFile,
-  UploadedFiles,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
-import { AnyFilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DecryptedJWT } from '../assets/customTypes';
-import { mimes } from '../assets/mimeExtension';
 import { MediaService } from './media.service';
 import { filePathHelpers } from './helpers/filepath.helpers';
 import { Request, Response } from 'express';
-import { join } from 'path';
-import { createReadStream, statSync } from 'fs';
 import { ApiTags } from '@nestjs/swagger';
-const fs = require('fs-extra');
-let referenceFileName = '';
-let userEmail = '';
-let mimeType = 'application';
-let fileType = 'application';
+import { S3Config, s3 } from './media.module';
+import { orderBy } from 'lodash';
 
 type User = { id: number; fullName: string; email: string };
 
-let user: DecryptedJWT = {
-  id: 0,
-  fullName: '',
-  email: '',
-  iat: 0,
-};
 
 export const decodingJWT = (token: string) => {
   console.log('decoding JWT token');
@@ -58,39 +43,113 @@ export const decodingJWT = (token: string) => {
 export class MediaController {
   constructor(private mediaService: MediaService) {}
 
+  @Post('checkFileExist')
+  async checkFileExist(@Body() body: { name: string }, @Req() req: Request) {
+    const { name } = body;
+    const splittedJWT = req.headers.cookie.split('=')[1];
+    const decodedUser = decodingJWT(splittedJWT);
+
+    const isFileExist = await this.mediaService.checkFileExist(
+      decodedUser,
+      name,
+    );
+    if (isFileExist) {
+      throw new HttpException('File already exist', 400);
+    }
+    return true;
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('uploadFiles')
-  @UseInterceptors(
-    AnyFilesInterceptor({
-      dest: 'uploads',
-      storage: diskStorage({
-        destination: (req, file, callback) => {
-          let type = req.params.type;
-          const splittedJWT = req.headers.cookie.split('=')[1];
-          user = decodingJWT(splittedJWT);
-          const { email } = user;
-          userEmail = email;
-          mimeType = file.mimetype;
-          fileType = file.mimetype.split('/')[0];
-          const path = filePathHelpers({ email, fileType });
-          fs.mkdirsSync(path);
-          callback(null, path);
-        },
-        filename: (req, file, cb) => {
-          referenceFileName = file.originalname;
-          cb(null, file.originalname);
-        },
-      }),
-    }),
-  )
-  async uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
-    const res = this.mediaService.uploadFiles(
-      user,
-      userEmail,
-      referenceFileName,
+  async uploadFiles(@Req() req: Request, @Body() body) {
+    const { fileName, location, mimeType } = body;
+    const splittedJWT = req.headers.cookie.split('=')[1];
+    const decodedUser = decodingJWT(splittedJWT);
+    const { email } = decodedUser;
+    const fileType = mimeType.split('/')[0];
+
+    const res = await this.mediaService.uploadFiles(
+      decodedUser,
+      email,
+      fileName,
       fileType,
       mimeType,
     );
     return res;
+  }
+
+  @Post('upload/initializeMultipartUpload')
+  async initializeMultipartUpload(
+    @Body() body: { name: string; mimeType: string },
+    @Req() req: Request,
+  ) {
+    const { name, mimeType } = body;
+
+    const splittedJWT = req.headers.cookie.split('=')[1];
+    const decodedUser = decodingJWT(splittedJWT);
+    const { email } = decodedUser;
+    const fileType = mimeType.split('/')[0];
+    const path = filePathHelpers({ email, fileType });
+    const multipartParams = {
+      Bucket: S3Config.bucketName,
+      Key: `${path}/${name}`,
+    };
+
+    const { UploadId, Key } = await this.mediaService.initializeMultipartUpload(
+      multipartParams,
+    );
+    return { fileId: UploadId, fileKey: Key, name, mimeType };
+  }
+
+  @Post('upload/getMultipartPresignedUrls')
+  async getMultipartPreSignedUrls(
+    @Body()
+    body: {
+      fileId: string;
+      fileKey: string;
+      parts: number;
+      fileName: string;
+      mimeType: string;
+    },
+  ) {
+    const { fileKey, fileId, parts, fileName, mimeType } = body;
+    const multipartParams = {
+      Bucket: S3Config.bucketName,
+      Key: fileKey,
+      UploadId: fileId,
+    };
+
+    const partSignedUrlList = await this.mediaService.getMultipartPreSignedUrls(
+      parts,
+      multipartParams,
+    );
+    return {
+      partSignedUrlList,
+      fileName,
+      mimeType,
+    };
+  }
+
+  @Post('upload/finalizeMultipartUpload')
+  async finalizeMultipartUpload(@Body() body, @Res() res: Response) {
+    const { fileId, fileKey, parts, fileName, mimeType } = body;
+    const multipartParams = {
+      Bucket: S3Config.bucketName,
+      Key: fileKey,
+      UploadId: fileId,
+      MultipartUpload: {
+        // ordering the parts to make sure they are in the right order
+        Parts: orderBy(parts, ['PartNumber'], ['asc']),
+      },
+    };
+
+    const { Location } = await s3
+      .completeMultipartUpload(multipartParams)
+      .promise();
+
+    // completeMultipartUploadOutput.Location represents the
+    // URL to the resource just uploaded to the cloud storage
+    res.json({ Location, fileName, mimeType }).send();
   }
 
   @UseGuards(JwtAuthGuard)
@@ -145,30 +204,22 @@ export class MediaController {
       email,
       category,
     );
-    // file.pipe(response)
-    // const media = file.name.split(`${email}/`)[1];
-    // response.download(`./uploads/${email}/${category}/${file.name}`);
-    // response.setHeader('Content-Disposition', `attachment; filename=${media}`);
-    // return response.download(`/${email}/${category}/${media}`);
-    // response.contentType('image/*');
-    // response.send(file);
-    const streamFile = createReadStream(
-      join(`./uploads/${email}/${category}/${file.name}`),
-      {
-        autoClose: true,
-      },
-    );
 
-    response.contentType(file.mimeType);
+    const s3ObjParams = {
+      Bucket: S3Config.bucketName,
+      Key: `${email}/${category}/${file.name}`,
+    };
+
+    const { ContentLength } = await s3.headObject(s3ObjParams).promise();
+    var fileStream = s3.getObject(s3ObjParams).createReadStream();
     response.set({
-      'Content-Length': statSync(`./uploads/${email}/${category}/${file.name}`)
-        .size,
+      'Content-Length': ContentLength,
     });
+    response.contentType(file.mimeType);
     response.set({
       'Content-Disposition': `attachment; filename=${file.name}`,
     });
-    return new StreamableFile(streamFile);
 
-    // return response.send(file);
+    return new StreamableFile(fileStream);
   }
 }
