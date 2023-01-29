@@ -12,9 +12,7 @@ yarn-error.log*
 lerna-debug.log*
 
 # env
-.env
-.env.development
-.env.production
+.env*
 
 comment prisma's migration files
 # Prisma
