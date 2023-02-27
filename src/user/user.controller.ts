@@ -55,7 +55,7 @@ export class UserController {
   @Post('create')
   async saveUser(@Body() body: UserCreateDTO, @Res() res: Response) {
     const { email, fullName, token, refreshToken } =
-      await this.userService.saveUser(body) as SaveUserType;
+      (await this.userService.saveUser(body)) as SaveUserType;
     if (!email) {
       return res.status(401).send();
     }
@@ -126,7 +126,7 @@ export class UserController {
     @Res({ passthrough: false }) res: Response,
   ) {
     const { token, fullName, email, refreshToken } =
-      await this.userService.login(body.email, body.password) as SaveUserType;
+      (await this.userService.login(body.email, body.password)) as SaveUserType;
 
     if (!token) {
       return res.status(401).send();
@@ -216,7 +216,6 @@ export class UserController {
       .json({
         fullName: '',
         email: '',
-      })
-    .send();
+      });
   }
 }
