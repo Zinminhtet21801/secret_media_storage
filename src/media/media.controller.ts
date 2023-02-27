@@ -3,11 +3,10 @@ import {
   Controller,
   Delete,
   Get,
-  Header,
   HttpException,
   Param,
   Post,
-  Put,
+  Query,
   Req,
   Res,
   StreamableFile,
@@ -23,7 +22,6 @@ import { S3Config, s3 } from './media.module';
 import { orderBy } from 'lodash';
 
 type User = { id: number; fullName: string; email: string };
-
 
 export const decodingJWT = (token: string) => {
   console.log('decoding JWT token');
@@ -221,5 +219,12 @@ export class MediaController {
     });
 
     return new StreamableFile(fileStream);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('search')
+  async searchMedia(@Query('keyword') query: string) {
+    //TODO: implement search
+    console.log(query);
   }
 }
