@@ -477,4 +477,42 @@ export class MediaService {
     //   })
     //   .promise();
   }
+
+  async searchMediaByUserID(
+    userId: number,
+    query: string,
+    currentPage: number,
+  ) {
+    const [res, length] = await this.prisma.$transaction([
+      this.prisma.media.findMany({
+        where: {
+          user: {
+            id: userId,
+          },
+          name: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+        skip: (Number(currentPage) - 1) * 10,
+        take: 10,
+      }),
+      this.prisma.media.count({
+        where: {
+          user: {
+            id: userId,
+          },
+          name: {
+            contains: query,
+            mode: 'insensitive',
+          },
+        },
+      }),
+    ]);
+
+    return {
+      res,
+      length,
+    };
+  }
 }

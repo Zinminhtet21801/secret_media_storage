@@ -223,8 +223,17 @@ export class MediaController {
 
   @UseGuards(JwtAuthGuard)
   @Get('search')
-  async searchMedia(@Query('keyword') query: string) {
-    //TODO: implement search
-    console.log(query);
+  async searchMedia(
+    @Query('keyword') query: string,
+    @Query('currentPage') currentPage: number,
+    @Req() req: Request,
+  ) {
+    const { id } = req?.user as User;
+    const res = await this.mediaService.searchMediaByUserID(
+      id,
+      query,
+      currentPage,
+    );
+    return res;
   }
 }
