@@ -4,7 +4,7 @@ import { AuthModule } from '../auth/auth.module';
 import { MediaController } from './media.controller';
 import { Media } from './media.entity';
 import { MediaService } from './media.service';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaModule } from '../prisma/prisma.module';
 import { S3 } from 'aws-sdk';
 
 export const s3 = new S3({
